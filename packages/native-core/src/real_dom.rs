@@ -245,6 +245,11 @@ impl<S: State> RealDom<S> {
         // We do not need to remove the node from the parent's children list for children.
         fn inner<S: State>(dom: &mut RealDom<S>, id: ElementId) -> Option<Node<S>> {
             let mut node = dom.nodes[id.0].take()?;
+
+ 		for nodes_listener in dom.nodes_listening.values_mut() {
+                nodes_listener.remove(&id);
+            } 
+
             if let NodeType::Element { children, .. } = &mut node.node_type {
                 for c in children {
                     inner(dom, *c)?;
@@ -253,6 +258,11 @@ impl<S: State> RealDom<S> {
             Some(node)
         }
         let mut node = self.nodes[id.0].take()?;
+
+	  for nodes_listener in self.nodes_listening.values_mut() {
+            nodes_listener.remove(&id);
+        } 
+
         if let Some(parent) = node.parent {
             let parent = &mut self[parent];
             parent.remove_child(id);

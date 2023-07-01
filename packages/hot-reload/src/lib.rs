@@ -13,6 +13,7 @@ use dioxus_rsx::{
 use interprocess_docfix::local_socket::{LocalSocketListener, LocalSocketStream};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
+#[cfg(feature = "html")]
 pub use dioxus_html::HtmlCtx;
 use serde::{Deserialize, Serialize};
 
@@ -26,6 +27,17 @@ pub enum HotReloadMsg {
     Shutdown,
 }
 
+#[cfg(not(feature = "html"))]
+pub struct Config<Ctx: HotReloadingContext> {
+    root_path: &'static str,
+    listening_paths: &'static [&'static str],
+    excluded_paths: &'static [&'static str],
+    log: bool,
+    rebuild_with: Option<Box<dyn FnMut() -> bool + Send + 'static>>,
+    phantom: std::marker::PhantomData<Ctx>,
+}
+
+#[cfg(feature = "html")]
 pub struct Config<Ctx: HotReloadingContext = HtmlCtx> {
     root_path: &'static str,
     listening_paths: &'static [&'static str],
@@ -48,6 +60,7 @@ impl<Ctx: HotReloadingContext> Default for Config<Ctx> {
     }
 }
 
+#[cfg(feature = "html")]
 impl Config<HtmlCtx> {
     pub const fn new() -> Self {
         Self {
@@ -389,7 +402,7 @@ pub fn connect(mut f: impl FnMut(HotReloadMsg) + Send + 'static) {
 #[macro_export]
 macro_rules! hot_reload_init {
     () => {
-        #[cfg(debug_assertions)]
+        #[cfg(debug_assertions, feature = "html")]
         dioxus_hot_reload::init(dioxus_hot_reload::Config::new().root(env!("CARGO_MANIFEST_DIR")));
     };
 

@@ -91,7 +91,3 @@ plugin = ["mlua"]
 [[bin]]
 path = "src/main.rs"
 name = "dioxus"
-
-[[bin]]
-path = "src/main.rs"
-name = "dx"

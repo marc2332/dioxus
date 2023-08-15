@@ -171,27 +171,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         use_future(cx, (count,), |(count,)| async move {
             loop {
-                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                count.set(*count + 1);
+                tokio::time::sleep(std::time::Duration::from_millis(2)).await;
+                if *count.get() == 50 {
+                    count.set(0);
+                } else {
+                    count.set(*count + 1);
+                }
             }
         });
 
         cx.render(rsx! {
-            div{
-                color: "red",
-                "{count}",
-                Comp {}
+            div { color: "red",
+                "{count}"
+                div {
+                    for el in 0..*count.get() {
+                        rsx!(
+                            Comp {
+                                key: "{el}",
+                            }
+                        )
+                    }
+                }
+                div {
+                    for el in 0..*count.get() {
+                        rsx!(
+                            Comp {
+                                key: "{el}",
+                            }
+                        )
+                    }
+                }
             }
         })
     }
 
     fn Comp(cx: Scope) -> Element {
-        cx.render(rsx! {
-            div{
-                border: "",
-                "hello world"
-            }
-        })
+        cx.render(rsx! { div { border: "", "hello world" } })
     }
 
     // create the vdom, the real_dom, and the binding layer between them
@@ -233,17 +248,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ctx.insert(FontSize(3.3));
                 let _to_rerender = rdom.update_state(ctx);
 
-                // render...
-                rdom.traverse_depth_first_advanced(true, |node| {
-                    let indent = " ".repeat(node.height() as usize);
-                    let color = *node.get::<TextColor>().unwrap();
-                    let size = *node.get::<Size>().unwrap();
-                    let border = *node.get::<Border>().unwrap();
-                    let id = node.id();
-                    let node = node.node_type();
-                    let node_type = &*node;
-                    println!("{indent}{id:?} {color:?} {size:?} {border:?} {node_type:?}");
-                });
+                println!("DOM size: {}", rdom.tree_ref().len());
             }
         })
 }
